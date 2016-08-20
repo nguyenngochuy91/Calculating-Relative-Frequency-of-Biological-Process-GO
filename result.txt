@@ -1,0 +1,77 @@
+bsub-BSU32710	0.0000	not found	
+bsub-BSU33950	0.1089	cggR-gapA-pgk-tpiA-pgm-eno
+bsub-BSU15880	0.3135	fapR-plsX-fabDG
+bsub-BSU11190	0.4069	argCJBD-carAB-argF
+bsub-BSU25680	0.4340	not found		
+bsub-BSU24430	0.4659	yqhV-spoIIIAABCDEFGH
+bsub-BSU05900	0.4729	not found		
+bsub-BSU16120	0.4891	topA
+bsub-BSU00930	0.4964	gltX-cysES-yazC-yacOP
+bsub-BSU00830	0.5835	ctsR-mcsAB-clpC-radA-yacK
+bsub-BSU12920	0.6183	dppABCDE
+bsub-BSU28030	0.6999	mreBCD-minCD
+bsub-BSU15370	0.7242	ylmDEFGH
+bsub-BSU34930	0.7323	not found		
+bsub-BSU16490	0.7489	rsbRSTUVW-sigB-rsbX
+bsub-BSU06420	0.7591	purEKBCSQLFMNHD
+bsub-BSU28310	0.7739	ilvBHC-leuABCD
+bsub-BSU01070	0.9216	rpoB
+bsub-BSU11430	0.9260	oppABCDF
+bsub-BSU15490	0.9361	pyrRPBCAAABKDFE
+bsub-BSU35000	0.9427	hprK
+bsub-BSU36880	0.9652	atp
+bsub-BSU08290	0.9985	yfiJK
+bsub-BSU16590	1.0247	ylxS-nusA-ylxRQ-infB-ylxP-rbfA
+bsub-BSU28560	1.0445	lcfA-ysiAB-etfBA
+bsub-BSU27630	1.0566	yrvD
+bsub-BSU16730	1.1785	spoVFAB-asd-dapG-dapA
+bsub-BSU30420	1.1952	ytrGABCDEF
+bsub-BSU25510	1.2032	lepA-hemN-hrcA-grpE-dnaKJ-yqeTUV
+bsub-BSU24990	1.2308	pst
+bsub-BSU02530	1.2583	ptb-bcd-buk-lpdV-bkdAABB
+bsub-BSU00990	1.3164	 yrvD
+bsub-BSU00500	1.3266	gcaD-prs-ctc
+bsub-BSU28170	1.3356	hemAXCDBL
+bsub-BSU13870	1.3851	not found		
+bsub-BSU31710	1.3940	comQX
+bsub-BSU23030	1.4181	not found		
+bsub-BSU23150	1.4427	resABCDE
+bsub-BSU24300	1.5210	not found		
+bsub-BSU24730	1.5594	comGABCDEFG-yqzE
+bsub-BSU24170	1.5634	mmgABCDE-yqiQ
+bsub-BSU22680	1.5906	trpEDCFBA-hisC-tyrA-aroE
+bsub-BSU39350	1.6000	hut
+bsub-BSU03320	1.6250	nasBCDEF
+bsub-BSU22500	1.6328	spoVAABCDEBEAF
+bsub-BSU23440	1.6387	spoVAABCDEBEAF
+bsub-BSU40410	1.6647	yycFGHIJ-yyxA
+bsub-BSU24090	1.6909	ptb-bcd-buk-lpdV-bkdAABB
+bsub-BSU14880	1.7044	ctaBCDEFG
+bsub-BSU38500	1.7538	dltABCDE
+bsub-BSU08060	1.7765	acoABCL
+bsub-BSU00270	1.7823	not found		
+bsub-BSU30260	1.8203	not found		
+bsub-BSU30830	1.8612	menBEC
+bsub-BSU14260	1.9027	not found	
+bsub-BSU34780	1.9550	not found	
+bsub-BSU00570	1.9746	yabMNOPQ-divIC-yabR
+bsub-BSU38600	1.9939	licR
+bsub-BSU00740	1.9942	pabBAC-sul-folBK-yazB-yacF-lysS
+bsub-BSU31600	2.0723	mrpABCDEFG
+bsub-BSU38760	2.2453	cydABCD
+bsub-BSU35910	2.2460	rbsRKDACB
+bsub-BSU08920	2.3054	not found		
+bsub-BSU39520	2.3077	yxeKLMNOPQ
+bsub-BSU39680	2.3200	mmsA-iolBCDEF-idh-iolHI-fbaB
+bsub-BSU04670	2.5094	rsbRSTUVW-sigB-rsbX
+bsub-BSU38700	2.6038	sigY-yxlCDEFG
+bsub-BSU11650	2.6549	tenAI-goxB-thiSGF-yjbV
+bsub-BSU04050	2.6609	ycsFGI-kipIAR-ycsK
+bsub-BSU01700	2.6640	not found	
+bsub-BSU15170	3.3316	spoVD
+bsub-BSU39760	3.7816	mmsA-iolBCDEF-idh-iolHI-fbaB
+bsub-BSU28800	4.1285	araABDLMNPQ-abfA
+bsub-BSU06940	4.2757	not found		
+bsub-BSU37910	4.8731	sps
+bsub-BSU12300	5.5730	uxaC-yjmBCD-uxuA-yjmF-exuTR-uxaBA
+bsub-BSU34350	6.6907	eps
