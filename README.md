@@ -27,4 +27,4 @@ The script was written in python3
 ```bash
 ./relative_frequency_bioProcess.py -i operons_genes.txt -u uniprot.txt -s conservedOperonsSorted.txt 
 ```
-![top10_conserved.csv](https://github.com/nguyenngochuy91/Calculating-Relative-Frequency-of-Biological-Process-GO/blob/master/image/top10_conserved.csv)
+
