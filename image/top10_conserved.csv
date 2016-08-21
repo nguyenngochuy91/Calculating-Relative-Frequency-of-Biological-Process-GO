@@ -1,0 +1,63 @@
+GO_term,Biological_process,Relatively_frequency
+GO:0006810,P:transport,0.35
+GO:0030420,P:establishment of competence for transformation,0.47
+GO:0007049,P:cell cycle,0.7
+GO:0051301,P:cell division,0.77
+GO:0009228,P:thiamine biosynthetic process,0.94
+GO:0009229,P:thiamine diphosphate biosynthetic process,1.05
+GO:0044205,P:'de novo' UMP biosynthetic process,1.05
+GO:0006541,P:glutamine metabolic process,1.21
+GO:0006351,P:transcription,1.24
+GO:0030435,P:sporulation resulting in formation of a cellular spore,1.33
+GO:0006207,P:'de novo' pyrimidine nucleobase biosynthetic process,1.69
+GO:0006355,P:regulation of transcription,1.76
+GO:0006474,P:N-terminal protein amino acid acetylation,2.11
+GO:0006364,P:rRNA processing,2.81
+GO:0006352,P:DNA-templated transcription,2.81
+GO:0045892,P:negative regulation of transcription,3.38
+GO:0042254,P:ribosome biogenesis,4.22
+GO:0006281,P:DNA repair,4.22
+GO:0008654,P:phospholipid biosynthetic process,4.22
+GO:0000453,P:enzyme-directed rRNA 2'-O-methylation,4.22
+GO:0016311,P:dephosphorylation,4.22
+GO:0043937,P:regulation of sporulation,4.22
+GO:0009423,P:chorismate biosynthetic process,4.22
+GO:0006096,P:glycolytic process,4.69
+GO:0000050,P:urea cycle,6.33
+GO:0006526,P:arginine biosynthetic process,6.33
+GO:0042256,P:mature ribosome assembly,8.44
+GO:0009073,P:aromatic amino acid family biosynthetic process,8.44
+GO:0019632,P:shikimate metabolic process,8.44
+GO:0006633,P:fatty acid biosynthetic process,8.44
+GO:0034628,P:'de novo' NAD biosynthetic process from aspartate,8.44
+GO:0006006,P:glucose metabolic process,8.44
+GO:0097428,P:protein maturation by iron-sulfur cluster transfer,8.44
+GO:0007059,P:chromosome segregation,8.44
+GO:0006592,P:ornithine biosynthetic process,8.44
+GO:0006535,P:cysteine biosynthetic process from serine,8.44
+GO:0017148,P:negative regulation of translation,8.44
+GO:0006534,P:cysteine metabolic process,8.44
+GO:0006265,P:DNA topological change,8.44
+GO:0043335,P:protein unfolding,8.44
+GO:0006561,P:proline biosynthetic process,8.44
+GO:0006423,P:cysteinyl-tRNA aminoacylation,8.44
+GO:0006879,P:cellular iron ion homeostasis,8.44
+GO:0046166,P:glyceraldehyde-3-phosphate biosynthetic process,8.44
+GO:0006221,P:pyrimidine nucleotide biosynthetic process,8.44
+GO:0032259,P:methylation,8.44
+GO:0002949,P:tRNA threonylcarbamoyladenosine modification,8.44
+GO:0042450,P:arginine biosynthetic process via ornithine,8.44
+GO:0016226,P:iron-sulfur cluster assembly,8.44
+GO:0006094,P:gluconeogenesis,8.44
+GO:0051603,P:proteolysis involved in cellular protein catabolic process,8.44
+GO:0006007,P:glucose catabolic process,8.44
+GO:0019932,P:second-messenger-mediated signaling,8.44
+GO:0045717,P:negative regulation of fatty acid biosynthetic process,8.44
+GO:0097501,P:stress response to metal ion,8.44
+GO:0090071,P:negative regulation of ribosome biogenesis,8.44
+GO:0006098,P:pentose-phosphate shunt,8.44
+GO:0019538,P:protein metabolic process,8.44
+GO:0044571,P:[2Fe-2S] cluster assembly,8.44
+GO:0032297,P:negative regulation of DNA-dependent DNA replication initiation,8.44
+GO:0006313,P:transposition,8.44
+GO:0019563,P:glycerol catabolic process,8.44

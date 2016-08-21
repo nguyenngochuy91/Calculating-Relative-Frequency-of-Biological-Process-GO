@@ -1,0 +1,51 @@
+GO_term,Biological_process,Relatively_frequency
+GO:0006355,P:regulation of transcription,0.25
+GO:0000160,P:phosphorelay signal transduction system,0.55
+GO:0008152,P:metabolic process,0.6
+GO:0030435,P:sporulation resulting in formation of a cellular spore,0.74
+GO:0009401,P:phosphoenolpyruvate-dependent sugar phosphotransferase system,0.75
+GO:0055114,P:oxidation-reduction process,0.86
+GO:0006351,P:transcription,0.88
+GO:0006814,P:sodium ion transport,1.0
+GO:0055085,P:transmembrane transport,1.09
+GO:0045892,P:negative regulation of transcription,1.2
+GO:0006810,P:transport,1.25
+GO:0006474,P:N-terminal protein amino acid acetylation,1.5
+GO:0008654,P:phospholipid biosynthetic process,3.0
+GO:0016042,P:lipid catabolic process,3.0
+GO:0006464,P:cellular protein modification process,3.0
+GO:0016311,P:dephosphorylation,3.0
+GO:0043093,P:FtsZ-dependent cytokinesis,3.0
+GO:0043610,P:regulation of carbohydrate utilization,3.0
+GO:0009423,P:chorismate biosynthetic process,3.0
+GO:0006820,P:anion transport,3.0
+GO:0005975,P:carbohydrate metabolic process,3.43
+GO:0007049,P:cell cycle,3.5
+GO:0008360,P:regulation of cell shape,3.69
+GO:0051301,P:cell division,3.82
+GO:0008643,P:carbohydrate transport,4.5
+GO:0009228,P:thiamine biosynthetic process,4.67
+GO:0071555,P:cell wall organization,4.67
+GO:0009229,P:thiamine diphosphate biosynthetic process,5.25
+GO:0009252,P:peptidoglycan biosynthetic process,5.33
+GO:0019569,P:L-arabinose catabolic process to xylulose 5-phosphate,6.0
+GO:0019323,P:pentose catabolic process,6.0
+GO:0009254,P:peptidoglycan turnover,6.0
+GO:1900192,P:positive regulation of single-species biofilm formation,6.0
+GO:0009225,P:nucleotide-sugar metabolic process,6.0
+GO:0019698,P:D-galacturonate catabolic process,6.0
+GO:0016051,P:carbohydrate biosynthetic process,6.0
+GO:0019310,P:inositol catabolic process,6.0
+GO:0030259,P:lipid glycosylation,6.0
+GO:0016310,P:phosphorylation,6.0
+GO:0042840,P:D-glucuronate catabolic process,6.0
+GO:0006002,P:fructose 6-phosphate metabolic process,6.0
+GO:0009058,P:biosynthetic process,6.0
+GO:0000271,P:polysaccharide biosynthetic process,6.0
+GO:0005976,P:polysaccharide metabolic process,6.0
+GO:0046373,P:L-arabinose metabolic process,6.0
+GO:0031222,P:arabinan catabolic process,6.0
+GO:0097173,P:N-acetylmuramic acid catabolic process,6.0
+GO:0009635,P:response to herbicide,6.0
+GO:0006047,P:UDP-N-acetylglucosamine metabolic process,6.0
+GO:0006064,P:glucuronate catabolic process,6.0
