@@ -56,11 +56,11 @@ def return_dic_bsu(dic1,dic2,outfile,GeneName):
     
     
 if __name__ == "__main__":
-    args = get_arguments()
-    Operon = args.Operon
-    GeneBlock = args.GeneBlock
-    GeneName = args.GeneName
-    Outfile = args.Outfile
+    args       = get_arguments()
+    Operon     = args.Operon
+    GeneBlock  = args.GeneBlock
+    GeneName   = args.GeneName
+    Outfile    = args.Outfile
     operon_dic = parse_operon(Operon)
     geneBlock_dic = parse_gene_block_names_and_genes(GeneBlock)
     return_dic_bsu(geneBlock_dic,operon_dic,Outfile,GeneName)
