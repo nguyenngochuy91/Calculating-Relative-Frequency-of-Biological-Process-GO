@@ -5,39 +5,25 @@
     End     : 08/20/2016
 '''
 import csv
+import argparse
+# get the arguments from command line
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--Operon","-i",help="File to parse into newresult dic(operons_genes.txt)")
+    parser.add_argument("--Uniprot","-u", help="Uniprot genes file(uniprot.txt)")
+    parser.add_argument("--Score","-s", help="Conservation score of the operon(conservedOperonsSorted.txt)")
+    args = parser.parse_args()
+    return args
 ###############################################################################
 # Quick parsers to get info from files
 ###############################################################################
-# parse the gene_block_names_and_genes.txt file
-def parse_gene_block_names_and_genes(myfile):
-    infile = open(myfile)
-    mydic={}
+def return_dic_bsu(operons_genes):
+    newdic={}
+    infile = open(operons_genes,'r')
     for line in infile.readlines():
         line = line.strip()
-        items = line.split('\t')
-        # print items
-        mydic[items[0]] = items[1:]
-    return mydic
-# parse the B.Subtilis operon txt file
-def parse_operon(myfile):
-    infile = open(myfile)
-    mydic={}
-    # ignore the first line
-    for line in infile.readlines()[0:]:
         line = line.split('\t')
-        mydic[line[1]] = line[2]
-    return mydic
-
-
-# using the 2 dictionary to write out new operon file, where each line starts with 
-# starter gene name, follow by what gene in the operon in bsu-BSU format
-def return_dic_bsu(dic1,dic2):
-    newdic={}
-    for item in dic1:
-        # initiate a list
-        newdic[item]=[]
-        for gene in dic1[item]: # iterate through gene annotation
-            newdic[item].append(dic2[gene]) #add the formal format into the newdic
+        newdic[line[0]] = line[1:]
     return newdic
 
 '''@function: reading the uniprot file for each gene and get the go term into
@@ -178,7 +164,7 @@ def get_relative_freq(GO_local_count,local_total_count, total_BioProcess_count,G
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
    @input   : list of operon, newdic (key: operon, value: list of genes), gene_BioProcess_dic(key:gene,value: biological process go term)
-   @output  : GO_local_count (key: biological go term, value: count),local_total_count
+   @output  : csv file
 ''' 
 def writting_csv(relative_frequency_dic,GO_BioProcess_dic,outfile):
     with open(outfile, 'w') as csvfile:
@@ -190,28 +176,33 @@ def writting_csv(relative_frequency_dic,GO_BioProcess_dic,outfile):
             writer.writerow({'GO_term': key,
                              'Biological_process': GO_BioProcess_dic[key],
                              'Relatively_frequency': round(relative_frequency_dic[key],2)})
-        
+
+'''@function: writting out top10 or bottom10 biological process
+   @input   : list of go term
+   @output  : txt file
+''' 
+def writting_bioProcess(relative_frequency_dic,outfile):
+    out = open(outfile,'w')
+    for GO_term in relative_frequency_dic:
+        out.write(GO_term+'\n')
+    out.close()
 ###############################################################################
 # execute the pipeline
 ###############################################################################
 if __name__ == "__main__":
-    dic1 = parse_gene_block_names_and_genes('gene_block_names_and_genes.txt')
-    dic2 = parse_operon('B.Subtilis_Operons_ProOpDB.txt')
-    
-    # important dic to know which gene in an operon
-    newdic = return_dic_bsu(dic1,dic2) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
 
-    # write into a file in order to query uniprot file for each gene
-    outfile = open("name_bsucyc_uniprot","w")
-    for operon in newdic:
-        for gene in newdic[operon]:
-            outfile.write('BSUB:'+gene+'-MONOMER'+'\n')
-    outfile.close()
+    args    = get_arguments()
+    Operon  = args.Operon
+    Uniprot = args.Uniprot
+    Score   = args.Score
+    # important dic to know which gene in an operon
+    newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
+
     # the uniprot file after getting from the internet is uniprot.txt (manually)
     # getting the go term for each gene
     
     # important dic that stores go term for each gene.
-    final_dic = getting_go('uniprot.txt') # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
+    final_dic = getting_go(Uniprot) # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
     
     
     # getting the biological process Go term, the total bioP count, the count for each bioP term as a dic,
@@ -222,7 +213,7 @@ if __name__ == "__main__":
     
     
     # getting conservation score for each operon
-    score = getting_conservation_score('conservedOperonsSorted.txt') # ex: 'bsub-BSU40410': '1.6647'
+    score = getting_conservation_score(Score) # ex: 'bsub-BSU40410': '1.6647'
     # from the score dictionary, get the top 10 conserved and bottom 10 conserved operon
     top10,bottom10 = getting_top_bottom(score)
     # print (len(bottom10))
@@ -240,4 +231,7 @@ if __name__ == "__main__":
     
     # writting the relative into csv file, 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency
     writting_csv(top10_relative_frequency_dic,GO_BioProcess_dic,'top10_conserved.csv')
-    writting_csv(top10_relative_frequency_dic,GO_BioProcess_dic,'bottom10_conserved.csv')
+    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_dic,'bottom10_conserved.csv')
+    # writting bioProcess term from relative frequency dic into txt file
+    writting_bioProcess(top10_relative_frequency_dic,'top10_conserved.txt')
+    writting_bioProcess(top10_relative_frequency_dic,'bottom10_conserved.txt')
