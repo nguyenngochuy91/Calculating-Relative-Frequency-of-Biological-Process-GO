@@ -1,6 +1,8 @@
 # Calculating-Relative-Frequency-of-Biological-Process-GO
-## Installation 
-User can either use github interface Download or type the following command in command line:
+## Installation
+1. Download Biopython, recommend using annaconda.
+2. Clone or download this  [Ontology Parser](https://github.com/kkoziara/biopython/tree/master/Bio/Ontology) into where Biopython is install (usually in your python/site-packages/Bio)
+3. User can either use github interface download or type the following command in command line:
 ```bash
 git clone https://github.com/nguyenngochuy91/Ancestral-Blocks-Reconstruction
 ```
