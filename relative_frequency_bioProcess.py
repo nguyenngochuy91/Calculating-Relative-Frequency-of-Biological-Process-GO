@@ -4,14 +4,23 @@
     Start   : 08/18/2016
     End     : 08/20/2016
 '''
+
+from __future__ import division
 import csv
 import argparse
+from Bio.Ontology.IO import OboIO
+from Bio.Ontology.Data import OntologyGraph
+
+is_a ='is_a'
+part_of = 'part_of'
 # get the arguments from command line
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--Operon","-i",help="File to parse into newresult dic(operons_genes.txt)")
     parser.add_argument("--Uniprot","-u", help="Uniprot genes file(uniprot.txt)")
     parser.add_argument("--Score","-s", help="Conservation score of the operon(conservedOperonsSorted.txt)")
+    parser.add_argument("--Level","-l", help="At which level (depth) of the BioProcess Ontology that we want to compare")
+    parser.add_argument("--GO","-g", help="go-basic.obo file")
     args = parser.parse_args()
     return args
 ###############################################################################
@@ -75,11 +84,43 @@ def getting_top_bottom(score):
     top10 = sorted_dic[:10]
     bottom10 = sorted_dic[-10:]
     return top10,bottom10
+    
+    
 ###############################################################################
 # main functions to filter out the biological process and calculating
 # relative frequency for go term from either top10 or bottom10 operon,
 # and writing function into a csv
 ###############################################################################
+'''@function: From the go-basic.obo file, parse it into a graph dic, then filter
+              into a graph that only contains 'is_a' relationship
+   @input   : go_basic.obo
+   @output  : OntologyGraph 
+''' 
+def filter_graph(GO):
+    # parsing the go-basic.obo file into a big dic
+    go_graph = OboIO.OboReader(open(GO)).read()
+    # filtering that go into an only is_a relationship go
+    fgraph = OntologyGraph()
+    for label,node in go_graph.nodes.items():
+        fgraph.update_node(label,node.data) # get the info from the initial graph
+        for edge in node.succ:
+            # check if edge.data ='is_a'
+            if edge.data == is_a:
+                # add it into the new filter graph
+                fgraph.add_edge(label,edge.to_node.label,edge.data)
+    fgraph.synonyms = dict(go_graph.synonyms)
+    for rel,typedef in go_graph.typedefs.items():
+        if rel == is_a:
+            fgraph.typedefs[rel] = typedef
+    return fgraph
+    
+'''@function: From the filter graph with only is_a relationship, get the 
+              bioprocess at level given from the user
+   @input   : OntologyGraph (fgraph)
+   @output  : list of bioProcess go terms 
+''' 
+def search_level(fgraph,Level):
+    
     
 '''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
               from assumption, we can say that number of biological processes for all operon is equal
@@ -121,7 +162,7 @@ def get_biological_process_and_count(final_dic):
                     GO_BioProcess_dic[GO_term] = purpose
                 
     return gene_BioProcess_dic,count,GO_all_count,GO_BioProcess_dic
-    
+            
     
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
@@ -195,6 +236,13 @@ if __name__ == "__main__":
     Operon  = args.Operon
     Uniprot = args.Uniprot
     Score   = args.Score
+    GO      = args.GO
+    Level   = int(args.Level)
+    # filter the graph to only get the is_a relationship edge:    
+    fgraph = filter_graph(GO)
+    # given the filter graph, find all the biological process that is at level Level
+    level_bioProcess = search_level(fgraph,Level)
+    
     # important dic to know which gene in an operon
     newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
 
@@ -203,13 +251,14 @@ if __name__ == "__main__":
     
     # important dic that stores go term for each gene.
     final_dic = getting_go(Uniprot) # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
-    
+
     
     # getting the biological process Go term, the total bioP count, the count for each bioP term as a dic,
     # and the mapping from a go term and its biological process
     gene_BioProcess_dic,total_BioProcess_count,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
     # print ("total_BioProcess_count",total_BioProcess_count)
     # print ("GO_BioProcess_dic",GO_BioProcess_dic)
+
     
     
     # getting conservation score for each operon
