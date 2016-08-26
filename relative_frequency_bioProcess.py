@@ -11,8 +11,13 @@ import argparse
 from Bio.Ontology.IO import OboIO
 from Bio.Ontology.Data import OntologyGraph
 
+#gloval variable
 is_a ='is_a'
 part_of = 'part_of'
+MF_root = 'GO:0003674'
+BP_root = 'GO:0008150'
+CC_root = 'GO:0005575'
+
 # get the arguments from command line
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -115,13 +120,24 @@ def filter_graph(GO):
     return fgraph
     
 '''@function: From the filter graph with only is_a relationship, get the 
-              bioprocess at level given from the user
+              bioprocesses at level given from the user
    @input   : OntologyGraph (fgraph)
    @output  : list of bioProcess go terms 
 ''' 
 def search_level(fgraph,Level):
-    
-    
+    tree = {}
+    tree[1]=[BP_root]
+    # iterate through the depth of the graph from the root
+    for index in range(2,Level+1):
+        tree[index]=[]
+        for parent in tree[index-1]: # get to the upper level to find the predessor
+            node = fgraph.nodes[parent]
+            # check the children of this node
+            for edge in node.pred:
+                # add the children label into tree[index] list
+                tree[index].append(edge.to_node.label)
+    # print tree
+    return tree[Level]
 '''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
               from assumption, we can say that number of biological processes for all operon is equal
               to total number of biological processes for all genes in final dic
@@ -242,6 +258,7 @@ if __name__ == "__main__":
     fgraph = filter_graph(GO)
     # given the filter graph, find all the biological process that is at level Level
     level_bioProcess = search_level(fgraph,Level)
+    
     
     # important dic to know which gene in an operon
     newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
