@@ -138,6 +138,8 @@ def search_level(fgraph,Level):
                 tree[index].append(edge.to_node.label)
     # print tree
     return tree[Level]
+    
+
 '''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
               from assumption, we can say that number of biological processes for all operon is equal
               to total number of biological processes for all genes in final dic
@@ -178,7 +180,18 @@ def get_biological_process_and_count(final_dic):
                     GO_BioProcess_dic[GO_term] = purpose
                 
     return gene_BioProcess_dic,count,GO_all_count,GO_BioProcess_dic
+
             
+'''@function: For each operons, annotate their biological processes as following
+             1. For each gene in the operon
+   @input   : newdic, OntologyGraph (fgraph),gene_BioProcess_dic, list of go term at level we want to study
+   @output  : main biological processes dic (key: operon name, value: BP go terms dic count (key: go term, value: count))
+''' 
+def annotated_operon_at_level(newdic,filter_graph,gene_BioProcess_dic,level_bioProcess):
+    operon_BP = {} # Ex : {'bsub-BSU40410': ['GO:0000160','GO:0006355']}
+    #for operon in newdic:
+        
+    return operon_BP
     
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
@@ -260,7 +273,7 @@ if __name__ == "__main__":
     level_bioProcess = search_level(fgraph,Level)
     
     
-    # important dic to know which gene in an operon
+    # important dic to know which genes are in an operon
     newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
 
     # the uniprot file after getting from the internet is uniprot.txt (manually)
