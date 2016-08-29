@@ -10,14 +10,14 @@ import csv
 import argparse
 from Bio.Ontology.IO import OboIO
 from Bio.Ontology.Data import OntologyGraph
-
+import time
 #gloval variable
 is_a ='is_a'
 part_of = 'part_of'
 MF_root = 'GO:0003674'
 BP_root = 'GO:0008150'
 CC_root = 'GO:0005575'
-
+genes_with_no_GO_Term = ['BSU23401','BSU22440']
 # get the arguments from command line
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -182,17 +182,59 @@ def get_biological_process_and_count(final_dic):
     return gene_BioProcess_dic,count,GO_all_count,GO_BioProcess_dic
 
             
-'''@function: For each operons, annotate their biological processes as following
-             1. For each gene in the operon
-   @input   : newdic, OntologyGraph (fgraph),gene_BioProcess_dic, list of go term at level we want to study
-   @output  : main biological processes dic (key: operon name, value: BP go terms dic count (key: go term, value: count))
+'''@function: For each operons, find the count of each Biological Process in the operon
+   @input   : newdic, gene_BioProcess_dic
+   @output  : operon_BP_dic(key: operon name, value: [BP go terms dic count (key: go term, value: count),number of gene in the operon])
 ''' 
-def annotated_operon_at_level(newdic,filter_graph,gene_BioProcess_dic,level_bioProcess):
-    operon_BP = {} # Ex : {'bsub-BSU40410': ['GO:0000160','GO:0006355']}
-    #for operon in newdic:
-        
-    return operon_BP
+def get_BioProcess_from_operon(newdic,gene_BioProcess_dic):
+    operon_BP_dic = {} # Ex : {'bsub-BSU40410': [{'GO:0000160':4,'GO:0006355':3},5]}
+    for operon in newdic: # iterate through the operon names
+        length = len(newdic[operon])
+        BP_dic = {} # a local dictionary to keep count of each biological process in the operon
+        for gene in newdic[operon]: # iterate through the gene in the operon
+            if gene in genes_with_no_GO_Term: # those genes were not annotated with any go term
+                length -=1
+            else:
+                for process in gene_BioProcess_dic[gene]: # iterate through each process in the gene
+                    if process in BP_dic:
+                        BP_dic[process] +=1
+                    else:
+                        BP_dic[process] = 1
+        operon_BP_dic[operon] = [BP_dic,length]
+    return operon_BP_dic
     
+'''@function: For each operons, 
+            1. For each go term G in the operon:
+              a. Find the ancestors of G that is in level_bioProcess
+              b. 
+   @input   : operon_BP,fgraph,level_bioProcess
+   @output  : annotate_operon_dic(key: operon name, value: [dictionary (key:biological process at level 2, value: count)], length of operon]
+''' 
+def find_BP_at_level(operon_BP_dic,fgraph,level_bioProcess):
+    annotate_operon_dic ={}
+    for operon in operon_BP_dic:
+        info = operon_BP_dic[operon]
+        length = info[1]
+        BP_dic = info[0]
+        BP_level_dic ={} # dictionary for BP at level 2
+        for process in BP_dic:
+            if process in level_bioProcess:
+                if process in BP_level_dic:
+                    BP_level_dic[process] +=1
+                else:
+                    BP_level_dic[process] =1
+            else:
+                ancestors = fgraph.get_ancestors(process) # get the set of ancestors of the process
+                for ancestor in ancestors: 
+                    if ancestor in level_bioProcess: # check which ancestor is at lvl 2
+                        if ancestor in BP_level_dic:
+                            BP_level_dic[ancestor] +=1
+                        else:
+                            BP_level_dic[ancestor] =1
+        annotate_operon_dic[operon] = [BP_level_dic,length]
+        
+    return annotate_operon_dic
+            
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
    @input   : list of operon, newdic (key: operon, value: list of genes), gene_BioProcess_dic(key:gene,value: biological process go term)
@@ -260,57 +302,70 @@ def writting_bioProcess(relative_frequency_dic,outfile):
 # execute the pipeline
 ###############################################################################
 if __name__ == "__main__":
-
-    args    = get_arguments()
-    Operon  = args.Operon
-    Uniprot = args.Uniprot
-    Score   = args.Score
-    GO      = args.GO
-    Level   = int(args.Level)
-    # filter the graph to only get the is_a relationship edge:    
-    fgraph = filter_graph(GO)
-    # given the filter graph, find all the biological process that is at level Level
-    level_bioProcess = search_level(fgraph,Level)
     
-    
-    # important dic to know which genes are in an operon
-    newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
-
-    # the uniprot file after getting from the internet is uniprot.txt (manually)
-    # getting the go term for each gene
-    
-    # important dic that stores go term for each gene.
-    final_dic = getting_go(Uniprot) # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
-
-    
-    # getting the biological process Go term, the total bioP count, the count for each bioP term as a dic,
-    # and the mapping from a go term and its biological process
+    # testing
+    start = time.time()
+    fgraph = filter_graph('../go-basic.obo')
+    level_bioProcess = search_level(fgraph,2)
+    newdic = return_dic_bsu('operons_genes.txt')
+    final_dic = getting_go('uniprot.txt')
     gene_BioProcess_dic,total_BioProcess_count,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
-    # print ("total_BioProcess_count",total_BioProcess_count)
-    # print ("GO_BioProcess_dic",GO_BioProcess_dic)
-
+    operon_BP_dic = get_BioProcess_from_operon(newdic,gene_BioProcess_dic)
+    annotate_operon_dic = find_BP_at_level(operon_BP_dic,fgraph,level_bioProcess)
     
-    
-    # getting conservation score for each operon
-    score = getting_conservation_score(Score) # ex: 'bsub-BSU40410': '1.6647'
-    # from the score dictionary, get the top 10 conserved and bottom 10 conserved operon
-    top10,bottom10 = getting_top_bottom(score)
-    # print (len(bottom10))
-    # using the top10, bottom10 operon to get the genes in each operon.
-    # from these genes, get the go term for each, then calculate the frequency
-    
-    # get the top10 info:
-    top10_GO_local_count,top10_local_total_count = list_of_10_biological_process_and_count(top10,newdic,gene_BioProcess_dic)
-    # get relative frequency dic for each go term of the top10 operon
-    top10_relative_frequency_dic = get_relative_freq(top10_GO_local_count,top10_local_total_count, total_BioProcess_count,GO_all_count)
-    # get the bottom10 info
-    bottom10_GO_local_count,bottom10_local_total_count = list_of_10_biological_process_and_count(bottom10,newdic,gene_BioProcess_dic)
-    # get relative frequency dic for each go term of the bottom10 operon
-    bottom10_relative_frequency_dic = get_relative_freq(bottom10_GO_local_count,bottom10_local_total_count, total_BioProcess_count,GO_all_count)
-    
-    # writting the relative into csv file, 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency
-    writting_csv(top10_relative_frequency_dic,GO_BioProcess_dic,'top10_conserved.csv')
-    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_dic,'bottom10_conserved.csv')
-    # writting bioProcess term from relative frequency dic into txt file
-    writting_bioProcess(top10_relative_frequency_dic,'top10_conserved.txt')
-    writting_bioProcess(top10_relative_frequency_dic,'bottom10_conserved.txt')
+    end = time.time()
+    print end - start
+#    # real code
+#    args    = get_arguments()
+#    Operon  = args.Operon
+#    Uniprot = args.Uniprot
+#    Score   = args.Score
+#    GO      = args.GO
+#    Level   = int(args.Level)
+#    # filter the graph to only get the is_a relationship edge:    
+#    fgraph = filter_graph(GO)
+#    # given the filter graph, find all the biological process that is at level Level
+#    level_bioProcess = search_level(fgraph,Level)
+#    
+#    
+#    # important dic to know which genes are in an operon
+#    newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
+#
+#    # the uniprot file after getting from the internet is uniprot.txt (manually)
+#    # getting the go term for each gene
+#    
+#    # important dic that stores go term for each gene.
+#    final_dic = getting_go(Uniprot) # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
+#
+#    
+#    # getting the biological process Go term, the total bioP count, the count for each bioP term as a dic,
+#    # and the mapping from a go term and its biological process
+#    gene_BioProcess_dic,total_BioProcess_count,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+#    # print ("total_BioProcess_count",total_BioProcess_count)
+#    # print ("GO_BioProcess_dic",GO_BioProcess_dic)
+#
+#    
+#    
+#    # getting conservation score for each operon
+#    score = getting_conservation_score(Score) # ex: 'bsub-BSU40410': '1.6647'
+#    # from the score dictionary, get the top 10 conserved and bottom 10 conserved operon
+#    top10,bottom10 = getting_top_bottom(score)
+#    # print (len(bottom10))
+#    # using the top10, bottom10 operon to get the genes in each operon.
+#    # from these genes, get the go term for each, then calculate the frequency
+#    
+#    # get the top10 info:
+#    top10_GO_local_count,top10_local_total_count = list_of_10_biological_process_and_count(top10,newdic,gene_BioProcess_dic)
+#    # get relative frequency dic for each go term of the top10 operon
+#    top10_relative_frequency_dic = get_relative_freq(top10_GO_local_count,top10_local_total_count, total_BioProcess_count,GO_all_count)
+#    # get the bottom10 info
+#    bottom10_GO_local_count,bottom10_local_total_count = list_of_10_biological_process_and_count(bottom10,newdic,gene_BioProcess_dic)
+#    # get relative frequency dic for each go term of the bottom10 operon
+#    bottom10_relative_frequency_dic = get_relative_freq(bottom10_GO_local_count,bottom10_local_total_count, total_BioProcess_count,GO_all_count)
+#    
+#    # writting the relative into csv file, 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency
+#    writting_csv(top10_relative_frequency_dic,GO_BioProcess_dic,'top10_conserved.csv')
+#    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_dic,'bottom10_conserved.csv')
+#    # writting bioProcess term from relative frequency dic into txt file
+#    writting_bioProcess(top10_relative_frequency_dic,'top10_conserved.txt')
+#    writting_bioProcess(top10_relative_frequency_dic,'bottom10_conserved.txt')
