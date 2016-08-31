@@ -10,7 +10,7 @@ import csv
 import argparse
 from Bio.Ontology.IO import OboIO
 from Bio.Ontology.Data import OntologyGraph
-
+import time
 #gloval variable
 is_a ='is_a'
 part_of = 'part_of'
@@ -142,8 +142,18 @@ def search_level(fgraph,Level):
                 tree[index].append(edge.to_node.label)
     # print tree
     return tree[Level]
+     
+'''@function: From the level_bioProcess list, get the biological process of each term
+   @input   : OntologyGraph (fgraph),level_bioProcess
+   @output  : GO_BioProcess_level_dic
+''' 
+def retrieve_BP_at_level(fgraph,level_bioProcess):
+    GO_BioProcess_level_dic = {}
+    for GO in level_bioProcess:
+        node =  fgraph.nodes[GO]
+        GO_BioProcess_level_dic[GO] = node.data.name
+    return GO_BioProcess_level_dic
     
-
 '''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
               from assumption, we can say that number of biological processes for all operon is equal
               to total number of biological processes for all genes in final dic
@@ -281,50 +291,88 @@ def get_global_count(filter_operon_BP_dic):
     
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
-   @input   : list of operon, newdic (key: operon, value: list of genes), gene_BioProcess_dic(key:gene,value: biological process go term)
+   @input   : list of operon, filter_operon_BP_dic
    @output  : GO_local_count (key: biological go term, value: count),local_total_count
 '''
-def list_of_10_biological_process_and_count(operon_list,newdic,gene_BioProcess_dic):
+def list_of_10_biological_process_and_count(operon_list,filter_operon_BP_dic):
     GO_local_count = {} # Ex: {'GO:0006351':3, 'GO:0006355':4}
     local_total_count = 0
     for operon in operon_list:
-        # get the gene in the operon from newdic[operon]
-        for gene in newdic[operon]:
-            # get the biological process in each gene from gene_BioProcess_dic[gene]
-                for bioProcess in gene_BioProcess_dic[gene]:
-                    # increment the top10 or bottom10 biological process count
-                    local_total_count += 1
-                    # initiate the count for that bioProcess in GO_local_count as 1, or increment it 
-                    if bioProcess in GO_local_count:
-                        GO_local_count[bioProcess] += 1
-                    else:
-                        GO_local_count[bioProcess] = 1
-                        
+        # get the GO TERM in the operon from filter_operon_BP_dic
+        info = filter_operon_BP_dic[operon]
+        BP_dic = info[0]
+        for GO in BP_dic:
+            # increment local_total_count
+            local_total_count += BP_dic[GO]
+            if GO in GO_local_count:
+                GO_local_count[GO] += BP_dic[GO]
+            else:
+                GO_local_count[GO] = BP_dic[GO]                       
     return GO_local_count,local_total_count
+    
 '''@function: for each go term that appear in either top 10 or bottom 10, get it relative frequency. The formula is as follow:
               1. Get the count of the go term in top 10, divide it by the total of number go term in all top10. Set this as local frequency
               2. Get the count of the go term in all operon, divide it by the total of number go term in all operon. Set this as global frequency
               3. Divide local by global. get this as the relative frequency
-   @input   : GO_local_count,local_total_count, total_BioProcess_count,GO_all_count
+   @input   : GO_local_count,local_total_count, global_total_count,GO_glocal_count
    @output  : relative_frequency_dic (key : bioProcess, value: relative frequency)
 '''     
-def get_relative_freq(GO_local_count,local_total_count, total_BioProcess_count,GO_all_count):
+def get_relative_freq(GO_local_count,local_total_count, global_total_count,GO_glocal_count):
     relative_frequency_dic = {} #Ex: {'GO:1900192': .9031}
     for GO_term in GO_local_count:  
         local_freq = GO_local_count[GO_term]/local_total_count
-        global_freq = GO_all_count[GO_term]/total_BioProcess_count
+        global_freq = GO_glocal_count[GO_term]/global_total_count
         relative_freq = local_freq/global_freq
         relative_frequency_dic[GO_term] = relative_freq
     return relative_frequency_dic
     
+'''@function: given comparison dic and the relative frequency dic, adding item into the 
+              comparison dic
+   @input   : relative_frequency_dic,comparison_dic
+   @output  : comparison_dic
+'''        
+def helper_add(comparison_dic,relative_frequency_dic,choice):
+    for GO in relative_frequency_dic:
+        if relative_frequency_dic[GO] <1:
+            comparison_dic['under'][choice].add(GO)
+        elif relative_frequency_dic[GO] == 1:
+            comparison_dic['normal'][choice].add(GO)
+        else:
+            comparison_dic['over'][choice].add(GO)
+    return comparison_dic
+
+    
+'''@function: given top10_relative_frequency_dic,bottom10_relative_frequency_dic,
+              categorize based on frequency (over/under/normal representative)
+   @input   : top10_relative_frequency_dic,bottom10_relative_frequency_dic
+   @output  : comparison_dic
+'''        
+def compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic):
+    comparison_dic ={'under' :{'top':set(),'bot':set()},
+                     'over'  :{'top':set(),'bot':set()},
+                     'normal':{'top':set(),'bot':set()}}
+    # update using top10
+    comparison_dic = helper_add(comparison_dic,top10_relative_frequency_dic,'top')
+    # update using bot10
+    comparison_dic = helper_add(comparison_dic,bottom10_relative_frequency_dic,'bot')
+    
+    # check the one that are the same 
+    for level_representative in comparison_dic:
+        comparison_dic[level_representative]['same']=  comparison_dic[level_representative]['top'].intersection(comparison_dic[level_representative]['bot'])
+
+    # from the same, remove it from top and bottom
+    for level_representative in comparison_dic:
+        for GO in comparison_dic[level_representative]['same']:
+            comparison_dic[level_representative]['top'].remove(GO)
+            comparison_dic[level_representative]['bot'].remove(GO)
+    return comparison_dic
+    
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
-   @input   : list of operon, newdic (key: operon, value: list of genes), gene_BioProcess_dic(key:gene,value: biological process go term)
-   @output  : csv filecalculating
-# relative frequency for go term from either top10 or bottom10 operon,
-# and writing function into a csv
+   @input   : list of operon,GO_BioProcess_level_dic, gene_BioProcess_dic(key:gene,value: biological process go term)
+   @output  : csv file
 ''' 
-def writting_csv(relative_frequency_dic,GO_BioProcess_dic,outfile):
+def writting_csv(relative_frequency_dic,GO_BioProcess_level_dic,outfile):
     with open(outfile, 'w') as csvfile:
         fieldnames = ['GO_term', 'Biological_process','Relatively_frequency']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -332,8 +380,29 @@ def writting_csv(relative_frequency_dic,GO_BioProcess_dic,outfile):
         for key in sorted(relative_frequency_dic,key=relative_frequency_dic.get):
             
             writer.writerow({'GO_term': key,
-                             'Biological_process': GO_BioProcess_dic[key],
+                             'Biological_process': GO_BioProcess_level_dic[key],
                              'Relatively_frequency': round(relative_frequency_dic[key],2)})
+def to_string(myset,GO_BioProcess_level_dic):
+    mystring = ''
+    for item in myset:
+        mystring += item+':'+GO_BioProcess_level_dic[item]+ '\t'
+    return mystring
+                    
+'''@function: from comparison_dic write out into csv file
+   @input   : comparison_dic,GO_BioProcess_level_dic,outfile
+   @output  : csv file
+''' 
+def writting_comparison(comparison_dic,GO_BioProcess_level_dic,outfile):
+    with open(outfile, 'w') as csvfile:
+        fieldnames = ['representative_level','top10_only','bottom10_only','both']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for key in comparison_dic:
+            
+            writer.writerow({'representative_level': key,
+                             'top10_only': to_string(comparison_dic[key]['top'],GO_BioProcess_level_dic),
+                             'bottom10_only': to_string(comparison_dic[key]['top'],GO_BioProcess_level_dic),
+                             'both':to_string(comparison_dic[key]['same'],GO_BioProcess_level_dic)})
 
 '''@function: writting out top10 or bottom10 biological process
    @input   : list of go term
@@ -356,11 +425,13 @@ if __name__ == "__main__":
     Score   = args.Score
     GO      = args.GO
     Level   = int(args.Level)
+    start   = time.time()
     # filter the graph to only get the is_a relationship edge:    
     fgraph = filter_graph(GO)
     # given the filter graph, find all the biological process that is at level Level
     level_bioProcess = search_level(fgraph,Level)
-    
+    # retrieve the biological process of the term at level
+    GO_BioProcess_level_dic = retrieve_BP_at_level(fgraph,level_bioProcess)
     
     # important dic to know which genes are in an operon
     newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
@@ -399,17 +470,24 @@ if __name__ == "__main__":
     # from these genes, get the go term for each, then calculate the frequency
     
     # get the top10 info:
-    top10_GO_local_count,top10_local_total_count = list_of_10_biological_process_and_count(top10,newdic,gene_BioProcess_dic)
+    top10_GO_local_count,top10_local_total_count = list_of_10_biological_process_and_count(top10,filter_operon_BP_dic)
     # get relative frequency dic for each go term of the top10 operon
-    top10_relative_frequency_dic = get_relative_freq(top10_GO_local_count,top10_local_total_count, total_BioProcess_count,GO_all_count)
+    top10_relative_frequency_dic = get_relative_freq(top10_GO_local_count,top10_local_total_count, global_total_count,GO_glocal_count)
     # get the bottom10 info
-    bottom10_GO_local_count,bottom10_local_total_count = list_of_10_biological_process_and_count(bottom10,newdic,gene_BioProcess_dic)
+    bottom10_GO_local_count,bottom10_local_total_count = list_of_10_biological_process_and_count(bottom10,filter_operon_BP_dic)
     # get relative frequency dic for each go term of the bottom10 operon
-    bottom10_relative_frequency_dic = get_relative_freq(bottom10_GO_local_count,bottom10_local_total_count, total_BioProcess_count,GO_all_count)
+    bottom10_relative_frequency_dic = get_relative_freq(bottom10_GO_local_count,bottom10_local_total_count, global_total_count,GO_glocal_count)
     
+    # comparison between the top10 and bottom10    
+    comparison_dic = compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic)
+    # print comparison_dic
     # writting the relative into csv file, 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency
-    writting_csv(top10_relative_frequency_dic,GO_BioProcess_dic,'top10_conserved.csv')
-    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_dic,'bottom10_conserved.csv')
+    writting_csv(top10_relative_frequency_dic,GO_BioProcess_level_dic,'./Result/top10_conserved_level'+args.Level+'.csv')
+    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_level_dic,'./Result/bottom10_conserved_level'+args.Level+'.csv')
     # writting bioProcess term from relative frequency dic into txt file
-    writting_bioProcess(top10_relative_frequency_dic,'top10_conserved.txt')
-    writting_bioProcess(top10_relative_frequency_dic,'bottom10_conserved.txt')
+    writting_bioProcess(top10_relative_frequency_dic,'./Result/top10_conserved_level'+args.Level+'.txt')
+    writting_bioProcess(top10_relative_frequency_dic,'./Result/bottom10_conserved_level'+args.Level+'.txt')
+    # writting comparison file
+    writting_comparison(comparison_dic,GO_BioProcess_level_dic,'./Result/comparison'+args.Level+'.csv')
+    stop = time.time()
+    print stop-start
