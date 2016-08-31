@@ -2,7 +2,8 @@
 ## Installation
 1. Download Biopython, recommend using annaconda.
 2. Clone or download this  [Ontology Parser](https://github.com/kkoziara/biopython/tree/master/Bio/Ontology) into where Biopython is install (usually in your python/site-packages/Bio)
-3. User can either use github interface download or type the following command in command line:
+3. Download go-basic.obo file here [gene ontology file](http://purl.obolibrary.org/obo/go/go-basic.obo)
+4. User can either use github interface download or type the following command in command line:
 ```bash
 git clone https://github.com/nguyenngochuy91/Ancestral-Blocks-Reconstruction
 ```
@@ -23,10 +24,12 @@ The script was written in python3
   3. In UniProtKB results, click on Download tab, choose **"Download all"** with Format **"Text"**
   4. Unzip the downloaded file, save it as **"uniprot.txt"**
 
-* Step 3: Calculating the frequency of biological process of our operons. Using **"relative_frequency_bioProcess.py"** script to write out 4 files.
-  1. 2 csv files **"top10_conserved.csv"**,**"bottom10_conserved.csv"** with 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency. A line example: 'GO:0006810	P:transport	0.35'
-  2. 2 text files **"top10_conserved.txt"**,**"bottom10_conserved.txt"** that has Biological Process Go term on each line. A line example: 'GO:0006810'. This will serve to construct a DART graph for all the Biological Process Go term, with highlight on those that are over represented. (will be provide in Step 4 in the future).
+* Step 3: Calculating the frequency of biological process of our operons. Using **"relative_frequency_bioProcess.py"** script to write out 5 files.
+  1. 2 csv files **"top10_conserved_level2.csv"**,**"bottom10_conserved_level2.csv"** with 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency. A line example: 'GO:0006810	P:transport	0.35'
+  2. 2 text files **"top10_conserved_level2.txt"**,**"bottom10_conserved_level2.txt"** that has Biological Process Go term on each line. 
+  3. 1 csv file **"comparison2.csv"** with 1st is representative_level, 2nd is top10_only, 3rd is bottom10_only, 4th is both.
+  4. Following is an example of running the with go term at 2nd level from the root of the Gene Ontology
 ```bash
-./relative_frequency_bioProcess.py -i operons_genes.txt -u uniprot.txt -s conservedOperonsSorted.txt 
+./relative_frequency_bioProcess.py -i operons_genes.txt -u uniprot.txt -s conservedOperonsSorted.txt -l 2 -g go-basic.obo 
 ```
 
