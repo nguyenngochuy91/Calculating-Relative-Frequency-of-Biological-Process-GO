@@ -5,7 +5,7 @@
     End     : 08/20/2016
 '''
 import argparse
-
+import os
 # get the arguments from command line
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -64,4 +64,5 @@ if __name__ == "__main__":
     operon_dic = parse_operon(Operon)
     geneBlock_dic = parse_gene_block_names_and_genes(GeneBlock)
     return_dic_bsu(geneBlock_dic,operon_dic,Outfile,GeneName)
+    os.mkdir('Result')
     
