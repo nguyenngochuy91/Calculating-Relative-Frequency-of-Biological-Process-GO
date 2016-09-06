@@ -101,12 +101,47 @@ def getting_top_bottom(score):
 ###############################################################################
 # ** Method: Leaf
 ###############################################################################
-'''@function: From the go-basic.obo file, parse it into a graph dic, then filter
-              into a graph that only contains 'is_a' relationship
-   @input   : go_basic.obo
-   @output  : OntologyGraph 
+'''@function: from filter graph, get the level of information for each term
+   @input   : fgraph
+   @output  : GO_level_dic
 ''' 
+def assign_level(fgraph):
+    unvisited_nodes= set(fgraph.nodes.keys())
+    level_GO_dic={}
+    GO_level_dic = {}
+    level_GO_dic[1]=set([BP_root])
+    unvisited_nodes.remove(BP_root)
+    level =2 
+    # iterate through the depth of the graph from the root
+    while len(level_GO_dic[level-1]) !=0:
+        level_GO_dic[level]=set()
+        for parent in level_GO_dic[level-1]: # get to the upper level to find the predessor
+            node = fgraph.nodes[parent]
+            # check the children of this node
+            for edge in node.pred:
+                # add the children label into tree[index] list
+                if edge.to_node.label in unvisited_nodes:
+                    level_GO_dic[level].add(edge.to_node.label)
+                    unvisited_nodes.remove(edge.to_node.label)
+        level +=1
+    for level in level_GO_dic:
+        for GO in level_GO_dic[level]:
+            GO_level_dic[GO]=level
+    return GO_level_dic
 
+'''@function: filter out noise BP. The idea is that there are some operon, 
+              where all BP frquency is less than .5 . For those situation, we 
+              proceed as following:
+              1. Find most common ancestors for all of them.
+              2. If most common ancestors is BP_root, then remove operon
+              3. Else if none of the most common ancestors has higher than .5 frequency,
+              remove operon
+              4. Else, do it normally
+   @input   : filter_operon_BP_dic, fgraph
+   @output  : filter_operon_BP_dic 
+''' 
+def filter_noise(filter_operon_BP_dic, fgraph):
+    return None
 
 
 
@@ -146,16 +181,16 @@ def filter_graph(GO):
 ''' 
 def search_level(fgraph,Level):
     tree = {}
-    tree[1]=[BP_root]
+    tree[1]=set([BP_root])
     # iterate through the depth of the graph from the root
     for index in range(2,Level+1):
-        tree[index]=[]
+        tree[index]=set()
         for parent in tree[index-1]: # get to the upper level to find the predessor
             node = fgraph.nodes[parent]
             # check the children of this node
             for edge in node.pred:
                 # add the children label into tree[index] list
-                tree[index].append(edge.to_node.label)
+                tree[index].add(edge.to_node.label)
     # print tree
     return tree[Level]
      
