@@ -128,24 +128,48 @@ def assign_level(fgraph):
         for GO in level_GO_dic[level]:
             GO_level_dic[GO]=level
     return GO_level_dic
-
-'''@function: filter out noise BP. The idea is that there are some operon, 
-              where all BP frquency is less than .5 . For those situation, we 
-              proceed as following:
-              1. Find most common ancestors for all of them.
-              2. If most common ancestors is BP_root, then remove operon
-              3. Else if none of the most common ancestors has higher than .5 frequency,
-              remove operon
-              4. Else, do it normally
-   @input   : filter_operon_BP_dic, fgraph
+    
+    
+'''@function: filter out noise BP, the idea is as follow:
+                For each operon, 
+   @input   : low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count
    @output  : filter_operon_BP_dic 
 ''' 
-def filter_noise(filter_operon_BP_dic, fgraph):
-    return None
-
-
-
-
+def most_common_ancestor_unbias(low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count):
+    flag = False
+    Bio_dic ={}
+    while not flag:
+        
+    return Bio_dic
+'''@function: filter out noise BP, the idea is as follow:
+                For each operon, 
+   @input   : filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic
+   @output  : filter_operon_BP_dic 
+''' 
+def filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic):
+    new_filter = {}
+    for operon in filter_operon_BP_dic:
+        # instantiate new_dic:
+        new_filter[operon]=[]
+        Bio_dic ={}
+        # if all BP have frequency < .5, take the list of gene of the operon
+        low_frequency = []
+        info  = filter_operon_BP_dic[operon]
+        count = info[1]
+        term  = info[0]
+        flag = False # check if exist at least 1 BP with frequency >=/5
+        for GO in term:
+            if term[GO]/count >= .5:
+                flag = True
+                Bio_dic[GO] = term[GO]
+        if not flag: 
+            low_frequency.extend(newdic[operon])
+            Bio_dic = most_common_ancestor_unbias(low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count)
+        new_filter[operon].append(Bio_dic)
+        new_filter[operon].append(count)
+    return new_filter
+                
+                
 ###############################################################################
 # ** Method: Level
 ###############################################################################
@@ -478,6 +502,8 @@ if __name__ == "__main__":
     operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
     # filter our operon_BP_dic using score
     filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+    # get the level of each GO term
+    GO_level_dic = assign_level(fgraph)
     # real code
     args    = get_arguments()
     Operon  = args.Operon
@@ -531,6 +557,10 @@ if __name__ == "__main__":
         operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
         # filter our operon_BP_dic using score
         filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+        # get the level of each GO term
+        GO_level_dic = assign_level(fgraph)
+        
+        
     # using the top10, bottom10 operon to get the genes in each operon.
     # from these genes, get the go term for each, then calculate the frequency
     
