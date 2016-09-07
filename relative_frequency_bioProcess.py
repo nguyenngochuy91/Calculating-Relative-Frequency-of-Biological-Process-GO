@@ -137,7 +137,14 @@ def assign_level(fgraph):
 def raise_depth(current_level,gene_BioProcess_local):
     new_dic = {}
     for gene in gene_BioProcess_local:
-        
+        check = False # means that no modify
+        for GO in gene_BioProcess_local[gene]:
+            not_at_current_level = set()
+            at_current_level = set()
+            if gene_BioProcess_local[gene][GO] == current_level:
+                check = True
+            else:
+                not_at_current_level.add(GO)
     return new_dic
     
 '''@function: find most common ancestor BP of the low frequency gene without 
@@ -179,6 +186,9 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
             if new_dic[GO]/count >=.5:
                 flag = True
     Bio_dic ={}
+    for GO in new_dic:
+        if new_dic[GO]/count >=.5:
+            Bio_dic[GO] = new_dic[GO]
     return Bio_dic
 '''@function: filter out noise BP.
    @input   : filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic
