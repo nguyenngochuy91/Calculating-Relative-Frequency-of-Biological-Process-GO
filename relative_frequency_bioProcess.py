@@ -2,7 +2,7 @@
 ''' Author  : Huy Nguyen
     Program : For each B.Sub operon, get its gene (in bsu-BSU format)
     Start   : 08/18/2016
-    End     : 08/20/2016
+    End     : 09/2/2016
 '''
 
 from __future__ import division
@@ -128,21 +128,59 @@ def assign_level(fgraph):
         for GO in level_GO_dic[level]:
             GO_level_dic[GO]=level
     return GO_level_dic
-    
-    
-'''@function: filter out noise BP, the idea is as follow:
-                For each operon, 
-   @input   : low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count
-   @output  : filter_operon_BP_dic 
+
+'''@function: helper function to raise depth level of GO term up to the next level of depth (could be by 1
+              or several)
+   @input   : current_level,gene_BioProcess_local
+   @output  : gene_BioProcess_local 
 ''' 
-def most_common_ancestor_unbias(low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count):
-    flag = False
-    Bio_dic ={}
-    while not flag:
+def raise_depth(current_level,gene_BioProcess_local):
+    new_dic = {}
+    for gene in gene_BioProcess_local:
         
+    return new_dic
+    
+'''@function: find most common ancestor BP of the low frequency gene without 
+              overcount any  BP.
+   @input   : operon, fgraph,GO_level_dic,gene_BioProcess_dic, newdic,count
+   @output  : Bio_dic 
+''' 
+def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic, newdic,count):
+    low_frequency_gene = newdic[operon]   
+    flag = False
+    # low_frequency_depth to store depth level of the low frequency term
+    low_frequency_depth =set()
+    # create a small copy of gene_BioProcess_dic for this certain operon, 
+    # this dic will keep changing, Ex: {'BSU39660': {'GO:0000160':5, 'GO:0006355':4, 'GO:0006351':5}
+    gene_BioProcess_local = {}
+    for gene in low_frequency_gene:
+        gene_BioProcess_local[gene] = {}
+        for BP in gene_BioProcess_dic[gene]:
+            gene_BioProcess_local[gene][BP] = GO_level_dic[BP]
+        for GO in gene_BioProcess_dic[gene]:
+            low_frequency_depth.add(GO_level_dic[GO])
+    current_level = max(low_frequency_depth)
+    # keep iterate to raise minimum level up until we have high frequency or 
+    # or if the level is <=3 
+    while not flag and current_level >3:
+        # our gene_BioProcess_local keep will keep changing
+        # until we find a BP with frequency greater than .5
+        gene_BioProcess_local = raise_depth(current_level,gene_BioProcess_local)
+        new_dic = {}
+        for gene in gene_BioProcess_local:
+            for GO in gene_BioProcess_local[gene]:
+                if GO in new_dic:
+                    new_dic[GO] +=1
+                else:
+                    new_dic[GO] = 1
+        current_level +=1
+        # change flag if there is one with high frequency
+        for GO in new_dic:
+            if new_dic[GO]/count >=.5:
+                flag = True
+    Bio_dic ={}
     return Bio_dic
-'''@function: filter out noise BP, the idea is as follow:
-                For each operon, 
+'''@function: filter out noise BP.
    @input   : filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic
    @output  : filter_operon_BP_dic 
 ''' 
@@ -152,8 +190,7 @@ def filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,
         # instantiate new_dic:
         new_filter[operon]=[]
         Bio_dic ={}
-        # if all BP have frequency < .5, take the list of gene of the operon
-        low_frequency = []
+
         info  = filter_operon_BP_dic[operon]
         count = info[1]
         term  = info[0]
@@ -163,8 +200,7 @@ def filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,
                 flag = True
                 Bio_dic[GO] = term[GO]
         if not flag: 
-            low_frequency.extend(newdic[operon])
-            Bio_dic = most_common_ancestor_unbias(low_frequency, fgraph,GO_level_dic,gene_BioProcess_dic,count)
+            Bio_dic = most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic, newdic,count)
         new_filter[operon].append(Bio_dic)
         new_filter[operon].append(count)
     return new_filter
