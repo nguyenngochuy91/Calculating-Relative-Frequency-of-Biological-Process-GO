@@ -28,8 +28,11 @@ The script was written in python3
   1. 2 csv files **"top10_conserved_level2.csv"**,**"bottom10_conserved_level2.csv"** with 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency. A line example: 'GO:0006810	P:transport	0.35'
   2. 2 text files **"top10_conserved_level2.txt"**,**"bottom10_conserved_level2.txt"** that has Biological Process Go term on each line. 
   3. 1 csv file **"comparison2.csv"** with 1st is representative_level, 2nd is top10_only, 3rd is bottom10_only, 4th is both.
-  4. Following is an example of running the with go term at 2nd level from the root of the Gene Ontology
+  4. Following is an example of running the program with go term at 2nd level from the root of the Gene Ontology
 ```bash
 ./relative_frequency_bioProcess.py -i operons_genes.txt -u uniprot.txt -s conservedOperonsSorted.txt -l 2 -g go-basic.obo 
 ```
-
+  5. Following is an example of running the program that keeps most informative BP
+```bash
+./relative_frequency_bioProcess.py -i operons_genes.txt -u uniprot.txt -s conservedOperonsSorted.txt -g ../go-basic.obo -m leaf
+```
