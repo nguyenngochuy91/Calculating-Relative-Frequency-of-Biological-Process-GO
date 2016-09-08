@@ -7,6 +7,7 @@
 
 from __future__ import division
 import csv
+import os
 import argparse
 from Bio.Ontology.IO import OboIO
 from Bio.Ontology.Data import OntologyGraph
@@ -135,17 +136,39 @@ def assign_level(fgraph):
    @output  : gene_BioProcess_local 
 ''' 
 def raise_depth(current_level,gene_BioProcess_local):
-    new_dic = {}
+#    print 'gene_BioProcess_local',gene_BioProcess_local
+#    print 'current_level',current_level
     for gene in gene_BioProcess_local:
+
         check = False # means that no modify
-        for GO in gene_BioProcess_local[gene]:
-            not_at_current_level = set()
-            at_current_level = set()
+        not_at_current_level = set()
+        at_current_level = set()
+        for GO in gene_BioProcess_local[gene]:            
             if gene_BioProcess_local[gene][GO] == current_level:
+                at_current_level.add(GO)
                 check = True
             else:
                 not_at_current_level.add(GO)
-    return new_dic
+        if check: # means that we have to change gene_BioProcess_local[gene]
+        # the process is that : we keep the GO not_at_current_level, and 
+        # raise GO at_current_level to 1 level up
+#            print 'gene',gene
+#            print 'at_current_level',at_current_level
+#            print 'not_at_current_level',not_at_current_level
+            level_up = set()
+            for GO in at_current_level:
+                node = fgraph.nodes[GO]
+                for succ in node.succ:
+                    level_up.add(succ.to_node.label)
+            # get the set of the GO term up to 1 level that is not in the 
+            # not_at_current_level
+            difference  = level_up - not_at_current_level
+            # remove the GO that is in at_current_level
+            for GO in at_current_level:
+                del gene_BioProcess_local[gene][GO]
+            for GO in difference:
+                gene_BioProcess_local[gene][GO] = current_level -1
+    return gene_BioProcess_local
     
 '''@function: find most common ancestor BP of the low frequency gene without 
               overcount any  BP.
@@ -153,7 +176,7 @@ def raise_depth(current_level,gene_BioProcess_local):
    @output  : Bio_dic 
 ''' 
 def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic, newdic,count):
-    low_frequency_gene = newdic[operon]   
+    low_frequency_gene = newdic[operon]  
     flag = False
     # low_frequency_depth to store depth level of the low frequency term
     low_frequency_depth =set()
@@ -161,17 +184,23 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
     # this dic will keep changing, Ex: {'BSU39660': {'GO:0000160':5, 'GO:0006355':4, 'GO:0006351':5}
     gene_BioProcess_local = {}
     for gene in low_frequency_gene:
-        gene_BioProcess_local[gene] = {}
-        for BP in gene_BioProcess_dic[gene]:
-            gene_BioProcess_local[gene][BP] = GO_level_dic[BP]
-        for GO in gene_BioProcess_dic[gene]:
-            low_frequency_depth.add(GO_level_dic[GO])
+        if gene not in genes_with_no_GO_Term:
+            gene_BioProcess_local[gene] = {}
+            for BP in gene_BioProcess_dic[gene]:
+                gene_BioProcess_local[gene][BP] = GO_level_dic[BP]
+                low_frequency_depth.add(GO_level_dic[BP])
+        else:
+            count -=1
+
     current_level = max(low_frequency_depth)
+
     # keep iterate to raise minimum level up until we have high frequency or 
     # or if the level is <=3 
-    while not flag and current_level >3:
+    
         # our gene_BioProcess_local keep will keep changing
         # until we find a BP with frequency greater than .5
+#        print "gene_BioProcess_local",gene_BioProcess_local
+#        print "current_level",current_level
         gene_BioProcess_local = raise_depth(current_level,gene_BioProcess_local)
         new_dic = {}
         for gene in gene_BioProcess_local:
@@ -180,7 +209,7 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
                     new_dic[GO] +=1
                 else:
                     new_dic[GO] = 1
-        current_level +=1
+        current_level -=1
         # change flag if there is one with high frequency
         for GO in new_dic:
             if new_dic[GO]/count >=.5:
@@ -538,28 +567,33 @@ def writting_bioProcess(relative_frequency_dic,outfile):
 # execute the pipeline
 ###############################################################################
 if __name__ == "__main__":
-    # test again
-    fgraph = filter_graph('../go-basic.obo')  
-    newdic = return_dic_bsu('operons_genes.txt')
-    final_dic = getting_go('uniprot.txt')
-    score = getting_conservation_score('conservedOperonsSorted.txt')
-    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
-    # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
-    operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
-    # filter our operon_BP_dic using score
-    filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
-    # get the level of each GO term
-    GO_level_dic = assign_level(fgraph)
+#    # test again
+#    fgraph = filter_graph('../go-basic.obo')  
+#    newdic = return_dic_bsu('operons_genes.txt')
+#    final_dic = getting_go('uniprot.txt')
+#    score = getting_conservation_score('conservedOperonsSorted.txt')
+#    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+#    # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
+#    operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
+#    # filter our operon_BP_dic using score
+#    filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+#    # get the level of each GO term
+#    GO_level_dic = assign_level(fgraph)
+#    
+#    # filter out noise 
+#    filter_operon_BP_dic = filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic)
+    
     # real code
+
     args    = get_arguments()
     Operon  = args.Operon
     Uniprot = args.Uniprot
     Score   = args.Score
     GO      = args.GO
-    Level   = int(args.Level)
     Method  = args.Method
     start   = time.time()
-    
+    my_directory = './Result_'+Method+'/'
+    os.mkdir(my_directory)
     # filter the graph to only get the is_a relationship edge:    
     fgraph = filter_graph(GO)
     
@@ -579,7 +613,16 @@ if __name__ == "__main__":
     # and the mapping from a go term and its biological process
     
     gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+    
+    # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
+    operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
+    # filter our operon_BP_dic using score
+    filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+    print 'initial_operon_BP_dic', filter_operon_BP_dic
     if Method.lower() == 'level':
+        Level   = int(args.Level)
+        my_directory = my_directory+args.Level+'/'
+        os.mkdir(my_directory)
         # given the filter graph, find all the biological process that is at level Level
         level_bioProcess = search_level(fgraph,Level)
         # retrieve the biological process of the term at level
@@ -595,18 +638,22 @@ if __name__ == "__main__":
 
         # filter our operon_BP_dic using score
         filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
-        # get the GO_global_coutn dic and total number of BP at level
-        GO_glocal_count,global_total_count = get_global_count(filter_operon_BP_dic)
+
         
     elif Method.lower() =='leaf':
-        # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
-        operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
-        # filter our operon_BP_dic using score
-        filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+
         # get the level of each GO term
         GO_level_dic = assign_level(fgraph)
         
-        
+        # filter out noise 
+        filter_operon_BP_dic = filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic)
+        level_bioProcess = set()        
+        for operon in filter_operon_BP_dic:
+            for GO in filter_operon_BP_dic[operon][0]:
+                level_bioProcess.add(GO)
+        GO_BioProcess_level_dic = retrieve_BP_at_level(fgraph,level_bioProcess)
+    # get the GO_global_coutn dic and total number of BP at level
+    GO_glocal_count,global_total_count = get_global_count(filter_operon_BP_dic)
     # using the top10, bottom10 operon to get the genes in each operon.
     # from these genes, get the go term for each, then calculate the frequency
     
@@ -623,12 +670,12 @@ if __name__ == "__main__":
     comparison_dic = compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic)
     # print comparison_dic
     # writting the relative into csv file, 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency
-    writting_csv(top10_relative_frequency_dic,GO_BioProcess_level_dic,'./Result/top10_conserved_level'+args.Level+'.csv')
-    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_level_dic,'./Result/bottom10_conserved_level'+args.Level+'.csv')
+    writting_csv(top10_relative_frequency_dic,GO_BioProcess_level_dic,my_directory+'top10_conserved_level.csv')
+    writting_csv(bottom10_relative_frequency_dic,GO_BioProcess_level_dic,my_directory+'bottom10_conserved_level.csv')
     # writting bioProcess term from relative frequency dic into txt file
-    writting_bioProcess(top10_relative_frequency_dic,'./Result/top10_conserved_level'+args.Level+'.txt')
-    writting_bioProcess(top10_relative_frequency_dic,'./Result/bottom10_conserved_level'+args.Level+'.txt')
+    writting_bioProcess(top10_relative_frequency_dic,my_directory+'top10_conserved_level.txt')
+    writting_bioProcess(top10_relative_frequency_dic,my_directory+'bottom10_conserved_level.txt')
     # writting comparison file
-    writting_comparison(comparison_dic,GO_BioProcess_level_dic,'./Result/comparison'+args.Level+'.csv')
+    writting_comparison(comparison_dic,GO_BioProcess_level_dic,my_directory+'comparison.csv')
     stop = time.time()
     print stop-start
