@@ -196,7 +196,7 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
 
     # keep iterate to raise minimum level up until we have high frequency or 
     # or if the level is <=3 
-    
+    while not flag and current_level >4:
         # our gene_BioProcess_local keep will keep changing
         # until we find a BP with frequency greater than .5
 #        print "gene_BioProcess_local",gene_BioProcess_local
@@ -214,11 +214,12 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
         for GO in new_dic:
             if new_dic[GO]/count >=.5:
                 flag = True
-    Bio_dic ={}
-    for GO in new_dic:
-        if new_dic[GO]/count >=.5:
-            Bio_dic[GO] = new_dic[GO]
-    return Bio_dic
+#    Bio_dic ={}
+#    for GO in new_dic:
+#        if new_dic[GO]/count >=.5:
+#            Bio_dic[GO] = new_dic[GO]
+#    return Bio_dic
+    return new_dic
 '''@function: filter out noise BP.
    @input   : filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic
    @output  : filter_operon_BP_dic 
@@ -500,7 +501,7 @@ def helper_add(comparison_dic,relative_frequency_dic,choice):
 def compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic):
     comparison_dic ={'under' :{'top':set(),'bot':set()},
                      'over'  :{'top':set(),'bot':set()},
-                     'normal':{'top':set(),'bot':set()}}
+                     'normal':{'top':set(),'bot':set()}}            
     # update using top10
     comparison_dic = helper_add(comparison_dic,top10_relative_frequency_dic,'top')
     # update using bot10
@@ -515,7 +516,18 @@ def compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic):
         for GO in comparison_dic[level_representative]['same']:
             comparison_dic[level_representative]['top'].remove(GO)
             comparison_dic[level_representative]['bot'].remove(GO)
-    return comparison_dic
+        
+    new_dic =       {'under' :{'top':{},'bot':{}},
+                     'over'  :{'top':{},'bot':{}},
+                     'normal':{'top':{},'bot':{}}} 
+    for representation in comparison_dic:
+        new_dic[representation]['bot']['']=''
+        new_dic[representation]['top']['']=''
+        for GO in comparison_dic[representation]['top']:
+            new_dic[representation]['top'][GO] = top10_relative_frequency_dic[GO]
+        for GO in comparison_dic[representation]['bot']:
+            new_dic[representation]['bot'][GO] = bottom10_relative_frequency_dic[GO]
+    return new_dic
     
 '''@function: from a list of operon, get the count of all biological process in each operon,
               as well as the count of each biological process in those operons.
@@ -523,6 +535,7 @@ def compare(top10_relative_frequency_dic,bottom10_relative_frequency_dic):
    @output  : csv file
 ''' 
 def writting_csv(relative_frequency_dic,GO_BioProcess_level_dic,outfile):
+    
     with open(outfile, 'w') as csvfile:
         fieldnames = ['GO_term', 'Biological_process','Relatively_frequency']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -532,28 +545,59 @@ def writting_csv(relative_frequency_dic,GO_BioProcess_level_dic,outfile):
             writer.writerow({'GO_term': key,
                              'Biological_process': GO_BioProcess_level_dic[key],
                              'Relatively_frequency': round(relative_frequency_dic[key],2)})
-def to_string(myset,GO_BioProcess_level_dic):
-    mystring = ''
-    for item in myset:
-        mystring += item+':'+GO_BioProcess_level_dic[item]+ '\t'
-    return mystring
-                    
+
+    
 '''@function: from comparison_dic write out into csv file
    @input   : comparison_dic,GO_BioProcess_level_dic,outfile
    @output  : csv file
 ''' 
 def writting_comparison(comparison_dic,GO_BioProcess_level_dic,outfile):
+    GO_BioProcess_level_dic['']=''
+    GO_level_dic['']=''
+    print comparison_dic
     with open(outfile, 'w') as csvfile:
-        fieldnames = ['representative_level','top10_only','bottom10_only','both']
+        fieldnames = ['representative_level','top10_only','bottom10_only']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for key in comparison_dic:
-            
-            writer.writerow({'representative_level': key,
-                             'top10_only': to_string(comparison_dic[key]['top'],GO_BioProcess_level_dic),
-                             'bottom10_only': to_string(comparison_dic[key]['top'],GO_BioProcess_level_dic),
-                             'both':to_string(comparison_dic[key]['same'],GO_BioProcess_level_dic)})
-
+            top = sorted(comparison_dic[key]['top'],key = comparison_dic[key]['top'].get,reverse =True)
+            bot = sorted(comparison_dic[key]['bot'],key = comparison_dic[key]['bot'].get,reverse =True)
+            #same = list(comparison_dic[key]['same'])
+            top_length = len(top)
+            bot_length = len(bot)
+            #same_length = len(same)
+            if top_length>= bot_length:
+                max_length = top_length
+                min_length = bot_length
+            else:
+                max_length = bot_length
+                min_length = top_length
+            for index in range(1,min_length):
+                writer.writerow({'representative_level': key,
+                                 'top10_only': top[index][3:]+':'+
+                                 GO_BioProcess_level_dic[top[index]].replace('process','')+
+                                 ' ' +str(GO_level_dic[top[index]])+ ' '+
+                                 str(round(comparison_dic[key]['top'][top[index]],2)),
+                                 'bottom10_only': bot[index][3:]+':'
+                                 +GO_BioProcess_level_dic[bot[index]].replace('process','')+
+                                 ' ' +str(GO_level_dic[bot[index]])+ ' ' +
+                                 str(round(comparison_dic[key]['bot'][bot[index]],2))})
+            for index in range(min_length,max_length):
+                if max_length == top_length:
+                    writer.writerow({'representative_level': key,
+                                     'top10_only': top[index][3:]+':'+
+                                     GO_BioProcess_level_dic[top[index]].replace('process','')+
+                                     ' ' +str(GO_level_dic[top[index]])+ ' '+
+                                     str(round(comparison_dic[key]['top'][top[index]],2)),
+                                     'bottom10_only': ''})
+                else:                
+                    writer.writerow({'representative_level': key,
+                                     'top10_only': '',
+                                     'bottom10_only': bot[index][3:]+':'
+                                     +GO_BioProcess_level_dic[bot[index]].replace('process','')+
+                                     ' ' +str(GO_level_dic[bot[index]])+ ' ' +
+                                     str(round(comparison_dic[key]['bot'][bot[index]],2))})
+                
 '''@function: writting out top10 or bottom10 biological process
    @input   : list of go term
    @output  : txt file
@@ -567,21 +611,23 @@ def writting_bioProcess(relative_frequency_dic,outfile):
 # execute the pipeline
 ###############################################################################
 if __name__ == "__main__":
-#    # test again
-#    fgraph = filter_graph('../go-basic.obo')  
-#    newdic = return_dic_bsu('operons_genes.txt')
-#    final_dic = getting_go('uniprot.txt')
-#    score = getting_conservation_score('conservedOperonsSorted.txt')
-#    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
-#    # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
-#    operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
-#    # filter our operon_BP_dic using score
-#    filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
-#    # get the level of each GO term
-#    GO_level_dic = assign_level(fgraph)
-#    
-#    # filter out noise 
-#    filter_operon_BP_dic = filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic)
+    # test again
+    fgraph = filter_graph('../go-basic.obo')  
+    newdic = return_dic_bsu('operons_genes.txt')
+    final_dic = getting_go('uniprot.txt')
+    score = getting_conservation_score('conservedOperonsSorted.txt')
+    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+    # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
+    operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
+    # filter our operon_BP_dic using score
+    filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
+    # get the level of each GO term
+    GO_level_dic = assign_level(fgraph)
+    # filter out noise 
+    filter_operon_BP_dic = filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic)
+    
+    # get the level of each GO term
+    GO_level_dic = assign_level(fgraph)
     
     # real code
 
@@ -618,7 +664,7 @@ if __name__ == "__main__":
     operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
     # filter our operon_BP_dic using score
     filter_operon_BP_dic = filter_by_score(operon_BP_dic,score)
-    print 'initial_operon_BP_dic', filter_operon_BP_dic
+    # print 'initial_operon_BP_dic', filter_operon_BP_dic
     if Method.lower() == 'level':
         Level   = int(args.Level)
         my_directory = my_directory+args.Level+'/'
