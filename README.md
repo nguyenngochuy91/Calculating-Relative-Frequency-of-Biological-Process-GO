@@ -20,9 +20,10 @@ The script was written in python3
 ```
 * Step 2: Getting the protein file from [Uniprot database](http://www.uniprot.org/uploadlists/) website using **"name_bsucyc_uniprot.txt"**
   1. In **"Provide your identifiers"**, upload file **"name_bsucyc_uniprot.txt"** 
-  2. In **"Select options"**, choose From **"BioCyc"** to **"UniProtKB"**. Then hit **"Go"**
-  3. In UniProtKB results, click on Download tab, choose **"Download all"** with Format **"Text"**
-  4. Unzip the downloaded file, save it as **"uniprot.txt"**
+  2. In **"Select options"**, choose From **"GI number"** to **"UniProtKB"**. Then hit **"Go"**
+  3. In UniProtKB results, under the tab Filter By, choose **"Reviewed"**
+  4. Click Download tab, choose **"Download all"** with Format **"Text"**
+  5. Unzip the downloaded file, save it as **"uniprot.txt"**
 
 * Step 3: Calculating the frequency of biological process of our operons. Using **"relative_frequency_bioProcess.py"** script to write out 5 files.
   1. 2 csv files **"top10_conserved_level2.csv"**,**"bottom10_conserved_level2.csv"** with 1st column is go term, 2nd column is its bioprocess, 3rd column is relative frequency. A line example: 'GO:0006810	P:transport	0.35'
