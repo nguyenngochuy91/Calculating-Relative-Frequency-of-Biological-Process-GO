@@ -12,8 +12,8 @@ The script was written in python3
 
 ## Usage
 * Step 1: Using info from **"B.Subtilis_Operons_ProOpDB.txt"** , and **"gene_block_names_and_genes.txt**" to write out 2 files.
-  1. A text file **“operons_genes.txt”**, this will serve as an input for **"relative_frequency_bioProcess.py"** to parse into a dic. A line example: 'bsub-BSU23440	BSU23420	BSU23430	BSU23440	BSU23402	BSU23401	BSU23410'
-  2. A text file **"name_bsucyc_uniprot.txt"**, this will serve as an input for uniprot website to get protein file of all the gene. A line example: 'BSUB:BSU23420-MONOMER'
+  1. A text file **“operons_genes.txt”**, this will serve as an input for **"relative_frequency_bioProcess.py"** to parse into a dic. A line example: 'bsub-BSU40410	255767871	16081090	16081088	16081093	16081091	16081092'
+  2. A text file **"name_bsucyc_uniprot.txt"**, this will serve as an input for uniprot website to get protein file of all the gene. A line example: '255767871'
   3. Use the command line below: 
 ```bash
 ./get_genes_name.py -g gene_block_names_and_genes.txt -o operons_genes.txt -n name_bsucyc_uniprot.txt -r NC_000964.gbk
