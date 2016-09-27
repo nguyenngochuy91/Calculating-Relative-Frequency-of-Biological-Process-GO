@@ -16,7 +16,7 @@ The script was written in python3
   2. A text file **"name_bsucyc_uniprot.txt"**, this will serve as an input for uniprot website to get protein file of all the gene. A line example: 'BSUB:BSU23420-MONOMER'
   3. Use the command line below: 
 ```bash
-./get_genes_name.py -i B.Subtilis_Operons_ProOpDB.txt -g gene_block_names_and_genes.txt -o operons_genes.txt -n name_bsucyc_uniprot.txt
+./get_genes_name.py -g gene_block_names_and_genes.txt -o operons_genes.txt -n name_bsucyc_uniprot.txt -r NC_000964.gbk
 ```
 * Step 2: Getting the protein file from [Uniprot database](http://www.uniprot.org/uploadlists/) website using **"name_bsucyc_uniprot.txt"**
   1. In **"Provide your identifiers"**, upload file **"name_bsucyc_uniprot.txt"** 
