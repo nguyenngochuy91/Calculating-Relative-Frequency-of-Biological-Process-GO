@@ -9,6 +9,7 @@ from __future__ import division
 import csv
 import os
 import argparse
+from Bio import SwissProt
 from Bio.Ontology.IO import OboIO
 from Bio.Ontology.Data import OntologyGraph
 import time
@@ -18,7 +19,7 @@ part_of = 'part_of'
 MF_root = 'GO:0003674'
 BP_root = 'GO:0008150'
 CC_root = 'GO:0005575'
-genes_with_no_GO_Term = ['BSU23401','BSU22440']
+genes_with_no_GO_Term = ['BSU23401','BSU22440','BSU30120','BSU10670','BSU10710','BSU15390']
 # get the arguments from command line
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -42,32 +43,6 @@ def return_dic_bsu(operons_genes):
         newdic[line[0]] = line[1:]
     return newdic
 
-'''@function: reading the uniprot file for each gene and get the go term into
-              a dictionary
-   @input   : text file
-   @output  : dictionary, key is gene name, value is go term
-'''   
-def getting_go(myfile):
-    open_file= open(myfile,'r')
-    big_line = open_file.read()
-    separated = big_line.split('//')
-    new_list=[]
-    for item in separated:
-        new_list.append(item.split('\n'))
-    final_dic={}
-    for gene in new_list:
-        for item in gene:
-            if item[:17] == 'DR   BioCyc; BSUB':
-                modified = item.split(' ')
-                key = modified[4].replace(';','')
-                key= key.split(':')[1]
-                key = key.split('-')[0]       
-                final_dic[key]=[]
-            if item[:7]== 'DR   GO':
-                modified = item.split(';')
-                go_term = modified[1].strip(' ')+','+modified[2].strip(' ')
-                final_dic[key].append(go_term)
-    return final_dic
     
 '''@function: from the conserved operon sorted text file, create a dictionary              
    @input   : text file
@@ -92,7 +67,50 @@ def getting_top_bottom(score):
     bottom10 = sorted_dic[-10:]
     return top10,bottom10
     
+'''@function: helper function that given gene name attribute of a record of uniprot
+              provide the first locus name available
+              Using locus because :
+                  _ different file might use different synonym for gene name
+                  _ GI number is not available in uniprot file for some reason
+
+   @input   : a string (Ex: Name=bceA; Synonyms=barC, ytsC; OrderedLocusNames=BSU30380;)
+   @output  : a string of locus name
+''' 
+def get_locus(name):
+    info = name.split(';')
+    for item in info:
+        if 'OrderedLocusNames' in item:
+            OrderedLocusNames = item
+    locus_tags = OrderedLocusNames.split('OrderedLocusNames=')[1] # there might be several tags
+    locus = locus_tags.split(';')[0]
+    locus = locus.split(',')[0]
+    return locus
     
+'''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
+              from assumption, we can say that number of biological processes for all operon is equal
+              to total number of biological processes for all genes in final dic
+   @input   : uniprot.txt
+   @output  : 2 parameters: 
+              1. dic(key is a gene, value is its biological process) Ex: {'BSU40410':['GO:0000160','GO:0006355']}
+              2. dic (key is a specific biological process, value is its count in all operon) Ex: {'GO:0006351':3, 'GO:0006355':4}
+              
+''' 
+def get_biological_process_and_count(uniprot):
+    gene_BioProcess_dic ={} #Ex {'BSU40410':['GO:0000160','GO:0006355']}
+    GO_all_count ={} # Ex: {'GO:0006351':3, 'GO:0006355':4}
+    for record in SwissProt.parse(open(uniprot)):
+        BioProcess_list =[] # initiate a list for each gene
+        name = record.gene_name
+        locus = get_locus(name)
+        for item in record.cross_references:
+            if item[0] == 'GO' and item[2][0] == 'P': # get the bio Process GO term
+                BioProcess_list.append(item[1])
+                if item[1] in GO_all_count:
+                    GO_all_count[item[1]] += 1
+                else:
+                    GO_all_count[item[1]] = 1
+        gene_BioProcess_dic[locus] = BioProcess_list
+    return gene_BioProcess_dic,GO_all_count
 ###############################################################################
 # main functions to filter out the biological process and calculating
 # relative frequency for go term from either top10 or bottom10 operon,
@@ -193,10 +211,10 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
             count -=1
 
     current_level = max(low_frequency_depth)
-
+    # print current_level
     # keep iterate to raise minimum level up until we have high frequency or 
-    # or if the level is <=3 
-    while not flag and current_level >4:
+    # or if the level is <4 
+    while not flag and current_level >=4:
         # our gene_BioProcess_local keep will keep changing
         # until we find a BP with frequency greater than .5
 #        print "gene_BioProcess_local",gene_BioProcess_local
@@ -220,6 +238,7 @@ def most_common_ancestor_unbias(operon, fgraph,GO_level_dic,gene_BioProcess_dic,
 #            Bio_dic[GO] = new_dic[GO]
 #    return Bio_dic
     return new_dic
+    
 '''@function: filter out noise BP.
    @input   : filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,newdic
    @output  : filter_operon_BP_dic 
@@ -234,7 +253,7 @@ def filter_noise(filter_operon_BP_dic, fgraph, GO_level_dic,gene_BioProcess_dic,
         info  = filter_operon_BP_dic[operon]
         count = info[1]
         term  = info[0]
-        flag = False # check if exist at least 1 BP with frequency >=/5
+        flag = False # check if exist at least 1 BP with frequency >=/.5
         for GO in term:
             if term[GO]/count >= .5:
                 flag = True
@@ -289,7 +308,7 @@ def search_level(fgraph,Level):
             node = fgraph.nodes[parent]
             # check the children of this node
             for edge in node.pred:
-                # add the children label into tree[index] list
+                # add the children labeOrderedLocusNamesl into tree[index] list
                 tree[index].add(edge.to_node.label)
     # print tree
     return tree[Level]
@@ -304,44 +323,8 @@ def retrieve_BP_at_level(fgraph,level_bioProcess):
         node =  fgraph.nodes[GO]
         GO_BioProcess_level_dic[GO] = node.data.name
     return GO_BioProcess_level_dic
-    
-'''@function: using go term dic to pull out the biological process go term for each gene (assumption is that operons have different genes) 
-              from assumption, we can say that number of biological processes for all operon is equal
-              to total number of biological processes for all genes in final dic
-   @input   : dic, key is they gene, value is all its go term
-   @output  : 3 parameters: 
-              1. dic(key is a gene, value is its biological process) Ex: {'BSU40410':['GO:0000160','GO:0006355']}
-              2. dic (key is a specific biological process, value is its count in all operon) Ex: {'GO:0006351':3, 'GO:0006355':4}
-              3. dic (key is GO term, value is its biological process) Ex: {'GO:0006351':'P:transcription, DNA-templated'}
-''' 
-def get_biological_process_and_count(final_dic):
-    gene_BioProcess_dic ={} #Ex {'BSU40410':['GO:0000160','GO:0006355']}
-    GO_all_count ={} # Ex: {'GO:0006351':3, 'GO:0006355':4}
-    GO_BioProcess_dic = {} # Ex: {'GO:0006351':'P:transcription, DNA-templated'}
-    for gene in final_dic:
-        # initiate the list for biological process
-        gene_BioProcess_dic[gene] =[]
-        # go through the go term
-        for GO in final_dic[gene]:
-            GO = GO.split(',')
-            GO_term = GO[0]
-            purpose = GO[1]
-            # check if the go is a biological process:
-            if purpose[0] == 'P':
-                # increment the total count
-                # append this go term into the value of key gene in gene_BioProcess_dic
-                gene_BioProcess_dic[gene].append(GO_term)
-                # increment, or initiate the count of this GO_term as 1 in the GO_all_count
-                if GO_term in GO_all_count:
-                    GO_all_count[GO_term] += 1
-                else:
-                    GO_all_count[GO_term] = 1
-                
-                # add the go term and its purpose into the GO_BioProcess_dic if the go term is not in the dic already:
-                if GO_term not in GO_BioProcess_dic:
-                    GO_BioProcess_dic[GO_term] = purpose
-                
-    return gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic
+
+
     
 '''@function: For each gene, find their biological process at level 2
    @input   : newdic, gene_BioProcess_dic,level_bioProcess,fgraph
@@ -614,9 +597,8 @@ if __name__ == "__main__":
     # test again
     fgraph = filter_graph('../go-basic.obo')  
     newdic = return_dic_bsu('operons_genes.txt')
-    final_dic = getting_go('uniprot.txt')
     score = getting_conservation_score('conservedOperonsSorted.txt')
-    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+    gene_BioProcess_dic,GO_all_count = get_biological_process_and_count('uniprot.txt')
     # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
     operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
     # filter our operon_BP_dic using score
@@ -652,13 +634,10 @@ if __name__ == "__main__":
     # important dic to know which genes are in an operon
     newdic = return_dic_bsu(Operon) # ex: 'bsub-BSU40410': ['BSU40370',  'BSU40380',  'BSU40360',  'BSU40410',  'BSU40390',  'BSU40400']
     
-    # important dic that stores go term for each gene.
-    final_dic = getting_go(Uniprot) # ex: 'BSU40390': ['GO:0016021,C:integral component of membrane','GO:0005886,C:plasma membrane']
-    
     # getting the biological process Go term, the count for each bioP term as a dic,
     # and the mapping from a go term and its biological process
     
-    gene_BioProcess_dic,GO_all_count,GO_BioProcess_dic = get_biological_process_and_count(final_dic)
+    gene_BioProcess_dic,GO_all_count = get_biological_process_and_count(Uniprot)
     
     # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
     operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
@@ -674,7 +653,7 @@ if __name__ == "__main__":
         # retrieve the biological process of the term at level
         GO_BioProcess_level_dic = retrieve_BP_at_level(fgraph,level_bioProcess)
         
-        # from GO_BioProcess_dic, for each gene, find the BP that is at level specified by user
+        # from gene_BioProcess_dic, for each gene, find the BP that is at level specified by user
         gene_BioProcess_dic = get_gene_BP_at_level(gene_BioProcess_dic,level_bioProcess,fgraph)
         # get the operon_dic that has key as operon name, value is dictionary (key is BP at level, value is count)
         operon_BP_dic =get_BioProcess_from_operon(newdic,gene_BioProcess_dic) 
